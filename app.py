@@ -1,45 +1,38 @@
 from flask import Flask, render_template, request, send_from_directory
-import yt_dlp
 import os
-import uuid
+import yt_dlp
 
 app = Flask(__name__)
 
-# تأكد مجلد التنزيل موجود
 DOWNLOAD_FOLDER = 'downloads'
-if not os.path.exists(DOWNLOAD_FOLDER):
-    os.makedirs(DOWNLOAD_FOLDER)
+app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
+
+# 👇 هذا هو السطر المهم!
+@app.route('/downloads/<path:filename>')
+def download_file(filename):
+    return send_from_directory(app.config['DOWNLOAD_FOLDER'], filename, as_attachment=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    error = None
     download_url = None
+
     if request.method == 'POST':
-        video_url = request.form.get('url')
-        if video_url:
-            try:
-                # اسم عشوائي للفيديو لتجنب التعارض
-                filename = str(uuid.uuid4()) + '.mp4'
-                filepath = os.path.join(DOWNLOAD_FOLDER, filename)
+        url = request.form['url']
+        try:
+            ydl_opts = {
+                'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title).70s.%(ext)s'),
+                'format': 'mp4',
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                filename = ydl.prepare_filename(info)
+                final_name = os.path.basename(filename)
+                download_url = f'/downloads/{final_name}'
+        except Exception as e:
+            error = str(e)
 
-                ydl_opts = {
-                    'outtmpl': filepath,
-                    'format': 'mp4',
-                }
-
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([video_url])
-
-                # رابط التحميل بعد النجاح
-                download_url = f'/downloads/{filename}'
-            except Exception as e:
-                return render_template("index.html", error=str(e))
-
-    return render_template("index.html", download_url=download_url)
-
-# للسماح بتحميل الملفات من مجلد downloads
-@app.route('/downloads/<path:filename>')
-def download_file(filename):
-    return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
+    return render_template('index.html', error=error, download_url=download_url)
 
 if __name__ == '__main__':
     app.run(debug=True)

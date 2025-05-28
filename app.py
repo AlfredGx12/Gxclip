@@ -72,10 +72,16 @@ def download():
     if not url:
         return jsonify({'error': 'الرجاء إدخال رابط الفيديو'}), 400
 
-    filename = download_youtube_video(url, quality)
-    if filename and os.path.exists(filename):
-        return jsonify({'success': True, 'download_url': f'/download_file/{os.path.basename(filename)}'})
-    return jsonify({'error': 'فشل تحميل الفيديو'}), 500
+    try:
+        filename = download_youtube_video(url, quality)
+        if filename and os.path.exists(filename):
+            return jsonify({'success': True, 'download_url': f'/download_file/{os.path.basename(filename)}'})
+        return jsonify({'error': 'فشل تحميل الفيديو'}), 500
+    except Exception as e:
+        import traceback
+        print("❌ استثناء أثناء التحميل:")
+        traceback.print_exc()
+        return jsonify({'error': f'حدث خطأ: {str(e)}'}), 500
 
 @app.route('/download_file/<filename>')
 def download_file(filename):

@@ -29,36 +29,13 @@ def setup_selenium():
         print(f"خطأ في إعداد السيلينيوم: {str(e)}")
         return None
 
+# يمكن حذف هذه الدالة إذا ما بتستخدم الكوكيز لاحقاً
 def update_cookies():
-    print("جاري تحديث ملف الكوكيات...")
-    driver = setup_selenium()
-    
-    if not driver:
-        print("فشل في تهيئة متصفح السيلينيوم")
-        return False
-        
-    try:
-        driver.get("https://www.youtube.com")
-        time.sleep(10)
-        cookies = driver.get_cookies()
-        with open('cookies.txt', 'w', encoding='utf-8') as f:
-            for cookie in cookies:
-                f.write(f"{cookie['name']}={cookie['value']}\n")
-        print("تم تحديث ملف الكوكيات بنجاح!")
-        return True
-    except Exception as e:
-        print(f"خطأ في تحديث الكوكيات: {str(e)}")
-        with open('cookies.txt', 'w', encoding='utf-8') as f:
-            f.write("")
-        return False
-    finally:
-        if driver:
-            driver.quit()
+    return True
 
 def download_youtube_video(url, quality='best'):
     try:
         ydl_opts = {
-            'cookiefile': 'cookies.txt',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'merge_output_format': 'mp4',
             'quiet': True,
@@ -87,7 +64,7 @@ def download_youtube_video(url, quality='best'):
             print("🎬 تم حفظ الفيديو في:", filename)
             return filename
     except Exception as e:
-        print(f"خطأ في التحميل من يوتيوب: {str(e)}")
+        print(f"❌ خطأ في التحميل من يوتيوب: {str(e)}")
         return None
 
 @app.route('/')

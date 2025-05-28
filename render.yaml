@@ -1,8 +1,9 @@
 services:
   - type: web
     name: video-downloader
-    plan: free
-    runtime: docker
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python app.py
+    startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.6
+        value: 3.9.13

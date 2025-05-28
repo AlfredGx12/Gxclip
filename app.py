@@ -5,7 +5,6 @@ import uuid
 
 app = Flask(__name__)
 
-# إنشاء مجلد التحميل إذا ما كان موجود
 DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
@@ -17,32 +16,29 @@ def index():
 
     if request.method == 'POST':
         video_url = request.form.get('url')
+
         if video_url:
             try:
-                # اسم عشوائي للملف
-                filename = str(uuid.uuid4())
-                filepath = os.path.join(DOWNLOAD_FOLDER, f"{filename}.%(ext)s")
+                filename = str(uuid.uuid4()) + '.mp4'
+                filepath = os.path.join(DOWNLOAD_FOLDER, filename)
 
                 ydl_opts = {
                     'outtmpl': filepath,
-                    'format': 'best[ext=mp4]/best',
+                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    'noplaylist': True,
                     'quiet': True,
-                    'no_warnings': True
+                    'no_warnings': True,
                 }
 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([video_url])
 
-                # ابحث عن اسم الملف الناتج فعلياً
-                for file in os.listdir(DOWNLOAD_FOLDER):
-                    if filename in file:
-                        download_url = f"/downloads/{file}"
-                        break
+                download_url = f'/downloads/{filename}'
 
             except Exception as e:
                 error = str(e)
 
-    return render_template("index.html", download_url=download_url, error=error)
+    return render_template('index.html', download_url=download_url, error=error)
 
 @app.route('/downloads/<path:filename>')
 def download_file(filename):

@@ -32,28 +32,25 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# تثبيت ChromeDriver المتوافق تلقائيًا
-RUN LATEST_VERSION=$(curl -sSL https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json | grep -oP '"linux64":{"version":"\K[^"]+') && \
-    wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${LATEST_VERSION}/linux64/chromedriver-linux64.zip" && \
-    unzip chromedriver-linux64.zip && \
+# تثبيت chromedriver المطابق للكروم المثبت
+RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+') && \
+    CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | grep -B 3 "\"version\": \"${CHROME_VERSION}\"" | grep "chromedriver-linux64" | grep "url" | cut -d '"' -f 4) && \
+    wget -q "$CHROMEDRIVER_VERSION" -O chromedriver.zip && \
+    unzip chromedriver.zip && \
     mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
-    rm -rf chromedriver-linux64.zip chromedriver-linux64
+    rm -rf chromedriver-linux64 chromedriver.zip
 
-# إعداد مجلد العمل
+# إعداد بيئة العمل
 WORKDIR /app
 
-# نسخ الملفات
 COPY requirements.txt .
 COPY app.py .
 COPY templates ./templates
 COPY cookies.txt .
 
-# إنشاء مجلد التحميل
 RUN mkdir -p downloads
 
-# تثبيت مكتبات بايثون
 RUN pip install --no-cache-dir -r requirements.txt
 
-# تشغيل التطبيق
 CMD ["python", "app.py"]

@@ -6,7 +6,16 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import time
 from datetime import datetime
-
+def setup_selenium():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.binary_location = "/usr/bin/google-chrome"
+    
+    service = Service(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
 app = Flask(__name__)
 
 # مسار مجلد التحميلات

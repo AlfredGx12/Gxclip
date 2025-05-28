@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# تثبيت الأدوات الأساسية ومكتبات دعم Chrome
+# تثبيت الأدوات الأساسية
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# تثبيت أحدث Google Chrome
+# تثبيت Google Chrome (سيثبت آخر إصدار بشكل تلقائي)
 RUN mkdir -p /etc/apt/keyrings && \
     curl -sSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
@@ -32,16 +32,14 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# تثبيت chromedriver المطابق للكروم المثبت
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+') && \
-    CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | grep -B 3 "\"version\": \"${CHROME_VERSION}\"" | grep "chromedriver-linux64" | grep "url" | cut -d '"' -f 4) && \
-    wget -q "$CHROMEDRIVER_VERSION" -O chromedriver.zip && \
-    unzip chromedriver.zip && \
+# تثبيت ChromeDriver 137 (متوافق مع Google Chrome 137.0.7151.55)
+RUN wget -q https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/137.0.7151.55/linux64/chromedriver-linux64.zip && \
+    unzip chromedriver-linux64.zip && \
     mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
-    rm -rf chromedriver-linux64 chromedriver.zip
+    rm -rf chromedriver-linux64.zip chromedriver-linux64
 
-# إعداد بيئة العمل
+# إعداد مجلد العمل
 WORKDIR /app
 
 COPY requirements.txt .

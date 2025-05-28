@@ -1,15 +1,6 @@
 services:
   - type: web
     name: video-downloader
-    runtime: python
-    buildCommand: |
-      apt-get update && \
-      apt-get install -y wget unzip curl gnupg && \
-      pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.13
-envVars:
-  - key: DISPLAY
-    value: ":99"
+    env: docker
+    plan: free
+    autoDeploy: true

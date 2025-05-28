@@ -1,51 +1,128 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <!-- نفس محتوى ملف HTML الذي أرسلته سابقاً -->
-    <!-- يمكنك استخدام نفس التصميم مع إضافة الجزء البرمجي التالي -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحميل الفيديوهات</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <!-- ... -->
+    <div class="container">
+        <h1>تحميل الفيديوهات من اليوتيوب وإنستجرام وتيك توك</h1>
+        
+        <input type="text" id="videoUrl" placeholder="أدخل رابط الفيديو هنا...">
+        <button onclick="downloadVideo()">تحميل</button>
+        
+        <div class="loading" id="loading">
+            جاري التحميل، الرجاء الانتظار...
+        </div>
+        
+        <div id="result"></div>
+    </div>
 
     <script>
-        document.querySelector('.btn-download').addEventListener('click', async function() {
-            const url = document.querySelector('.url-input').value.trim();
-            const btn = this;
+        function downloadVideo() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
             
-            if (!url) {
-                alert('الرجاء إدخال رابط الفيديو');
+            if (!videoUrl) {
+                result.style.display = 'block';
+                result.className = 'error';
+                result.innerHTML = 'الرجاء إدخال رابط الفيديو';
                 return;
             }
             
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
-            btn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
             
-            try {
-                const response = await fetch('/download', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `url=${encodeURIComponent(url)}`
-                });
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(videoUrl)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                result.style.display = 'block';
                 
-                const data = await response.json();
-                
-                if (data.error) {
-                    alert(data.error);
+                if (data.success) {
+                    result.className = 'success';
+                    result.innerHTML = `
+                        تم تحميل الفيديو من ${data.platform} بنجاح!<br>
+                        <a href="${data.download_url}" download>اضغط هنا للتحميل</a>
+                    `;
                 } else {
-                    alert(`تم تحضير فيديو ${data.platform} للتحميل!`);
-                    // تحميل الملف تلقائياً
-                    window.location.href = data.download_url;
+                    result.className = 'error';
+                    result.innerHTML = data.error || 'حدث خطأ أثناء التحميل';
                 }
-            } catch (error) {
-                alert('حدث خطأ أثناء الاتصال بالخادم');
-                console.error(error);
-            } finally {
-                btn.innerHTML = '<i class="fas fa-download"></i> تحميل الفيديو';
-                btn.disabled = false;
-            }
-        });
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                result.className = 'error';
+                result.innerHTML = 'حدث خطأ في الاتصال بالخادم';
+                console.error('Error:', error);
+            });
+        }
     </script>
 </body>
 </html>

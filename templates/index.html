@@ -1,52 +1,51 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>Clip Savior</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            margin-top: 50px;
-            background-color: #f7f7f7;
-        }
-        input {
-            padding: 10px;
-            width: 60%;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .message {
-            margin-top: 20px;
-        }
-    </style>
+    <!-- نفس محتوى ملف HTML الذي أرسلته سابقاً -->
+    <!-- يمكنك استخدام نفس التصميم مع إضافة الجزء البرمجي التالي -->
 </head>
 <body>
-    <h2>📥 تحميل المقاطع من المنصات</h2>
-    <form method="post">
-        <input type="text" name="url" placeholder="ضع رابط الفيديو هنا" required>
-        <br>
-        <button type="submit">تحميل</button>
-    </form>
+    <!-- ... -->
 
-    {% if error %}
-        <div class="message" style="color: red;">
-            ❌ خطأ: {{ error }}
-        </div>
-    {% endif %}
-
-    {% if download_url %}
-        <div class="message">
-            ✅ تم التحميل! اضغط هنا لتحميله:
-            <br>
-            <a href="{{ download_url }}" download>⬇️ تحميل الفيديو</a>
-        </div>
-    {% endif %}
+    <script>
+        document.querySelector('.btn-download').addEventListener('click', async function() {
+            const url = document.querySelector('.url-input').value.trim();
+            const btn = this;
+            
+            if (!url) {
+                alert('الرجاء إدخال رابط الفيديو');
+                return;
+            }
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url=${encodeURIComponent(url)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert(`تم تحضير فيديو ${data.platform} للتحميل!`);
+                    // تحميل الملف تلقائياً
+                    window.location.href = data.download_url;
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء الاتصال بالخادم');
+                console.error(error);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-download"></i> تحميل الفيديو';
+                btn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>

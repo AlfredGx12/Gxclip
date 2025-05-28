@@ -7,7 +7,6 @@ from selenium.webdriver.chrome.service import Service
 import time
 
 app = Flask(__name__)
-
 DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
@@ -20,22 +19,17 @@ def setup_selenium():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.binary_location = "/usr/bin/google-chrome"
-    
     try:
         service = Service(executable_path="/usr/local/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        return driver
+        return webdriver.Chrome(service=service, options=chrome_options)
     except Exception as e:
         print(f"خطأ في إعداد السيلينيوم: {str(e)}")
         return None
 
-# يمكن حذف هذه الدالة إذا ما بتستخدم الكوكيز لاحقاً
-def update_cookies():
-    return True
-
 def download_youtube_video(url, quality='best'):
     try:
         ydl_opts = {
+            'cookiefile': 'cookies.txt',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'merge_output_format': 'mp4',
             'quiet': True,
@@ -64,7 +58,7 @@ def download_youtube_video(url, quality='best'):
             print("🎬 تم حفظ الفيديو في:", filename)
             return filename
     except Exception as e:
-        print(f"❌ خطأ في التحميل من يوتيوب: {str(e)}")
+        print(f"❌ خطأ في التحميل: {str(e)}")
         return None
 
 @app.route('/')
@@ -73,46 +67,22 @@ def index():
 
 @app.route('/download', methods=['POST'])
 def download():
-    video_url = request.form.get('url', '').strip()
+    url = request.form.get('url', '').strip()
     quality = request.form.get('quality', 'best').strip()
-    
-    if not video_url:
+    if not url:
         return jsonify({'error': 'الرجاء إدخال رابط الفيديو'}), 400
-    
-    try:
-        if "youtube.com" in video_url or "youtu.be" in video_url:
-            filename = download_youtube_video(video_url, quality)
-            platform = "يوتيوب"
-        else:
-            return jsonify({'error': 'نوع الرابط غير مدعوم حالياً'}), 400
-        
-        if filename and os.path.exists(filename):
-            return jsonify({
-                'success': True,
-                'platform': platform,
-                'filename': os.path.basename(filename),
-                'download_url': f'/download_file/{os.path.basename(filename)}'
-            })
-        else:
-            return jsonify({'error': 'فشل تحميل الفيديو'}), 500
-    except Exception as e:
-        return jsonify({'error': f'حدث خطأ: {str(e)}'}), 500
+
+    filename = download_youtube_video(url, quality)
+    if filename and os.path.exists(filename):
+        return jsonify({'success': True, 'download_url': f'/download_file/{os.path.basename(filename)}'})
+    return jsonify({'error': 'فشل تحميل الفيديو'}), 500
 
 @app.route('/download_file/<filename>')
 def download_file(filename):
-    try:
-        return send_file(
-            os.path.join(DOWNLOAD_FOLDER, filename),
-            as_attachment=True,
-            download_name=filename
-        )
-    except Exception as e:
-        return jsonify({'error': f'الملف غير موجود: {str(e)}'}), 404
+    path = os.path.join(DOWNLOAD_FOLDER, filename)
+    if os.path.exists(path):
+        return send_file(path, as_attachment=True, download_name=filename)
+    return jsonify({'error': 'الملف غير موجود'}), 404
 
 if __name__ == '__main__':
-    try:
-        update_cookies()
-    except Exception as e:
-        print(f"خطأ في تحديث الكوكيات عند البدء: {str(e)}")
-    
     app.run(host='0.0.0.0', port=5000, debug=False)

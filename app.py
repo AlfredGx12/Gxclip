@@ -14,7 +14,7 @@ DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
 
-# إعداد السيلينيوم
+# إعداد السيلينيوم (النسخة المحسنة)
 def setup_selenium():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -24,20 +24,30 @@ def setup_selenium():
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.binary_location = "/usr/bin/google-chrome"
     
-    service = Service(executable_path="/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
+    try:
+        # استخدام المسار الثابت لـ chromedriver المثبت في Dockerfile
+        service = Service(executable_path="/usr/local/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
+    except Exception as e:
+        print(f"خطأ في إعداد السيلينيوم: {str(e)}")
+        return None
 
-# تحديث ملف الكوكيز
+# تحديث ملف الكوكيز (النسخة المحسنة)
 def update_cookies():
     print("جاري تحديث ملف الكوكيات...")
+    driver = setup_selenium()
+    
+    if not driver:
+        print("فشل في تهيئة متصفح السيلينيوم")
+        return False
+        
     try:
-        driver = setup_selenium()
         driver.get("https://www.youtube.com")
         time.sleep(10)  # زيادة وقت الانتظار
         
         cookies = driver.get_cookies()
-        with open('cookies.txt', 'w') as f:
+        with open('cookies.txt', 'w', encoding='utf-8') as f:
             for cookie in cookies:
                 f.write(f"{cookie['name']}={cookie['value']}\n")
         
@@ -46,14 +56,14 @@ def update_cookies():
     except Exception as e:
         print(f"خطأ في تحديث الكوكيات: {str(e)}")
         # إنشاء ملف كوكيز فارغ إذا فشل التحديث
-        with open('cookies.txt', 'w') as f:
+        with open('cookies.txt', 'w', encoding='utf-8') as f:
             f.write("")
         return False
     finally:
-        if 'driver' in locals():
+        if driver:
             driver.quit()
 
-# تحميل من يوتيوب
+# تحميل من يوتيوب (النسخة المحسنة)
 def download_youtube_video(url):
     try:
         ydl_opts = {
@@ -63,6 +73,8 @@ def download_youtube_video(url):
             'merge_output_format': 'mp4',
             'quiet': True,
             'no_warnings': True,
+            'ignoreerrors': True,
+            'retries': 3
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -70,16 +82,18 @@ def download_youtube_video(url):
             filename = ydl.prepare_filename(info)
             return filename
     except Exception as e:
-        print(f"خطأ في التحميل: {str(e)}")
+        print(f"خطأ في التحميل من يوتيوب: {str(e)}")
         return None
 
-# تحميل من إنستجرام
+# تحميل من إنستجرام (النسخة المحسنة)
 def download_instagram_video(url):
     try:
         ydl_opts = {
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'format': 'best',
             'quiet': True,
+            'ignoreerrors': True,
+            'retries': 3
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -90,13 +104,15 @@ def download_instagram_video(url):
         print(f"خطأ في تحميل إنستجرام: {str(e)}")
         return None
 
-# تحميل من تيك توك
+# تحميل من تيك توك (النسخة المحسنة)
 def download_tiktok_video(url):
     try:
         ydl_opts = {
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
             'format': 'best',
             'quiet': True,
+            'ignoreerrors': True,
+            'retries': 3
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -112,10 +128,10 @@ def download_tiktok_video(url):
 def index():
     return render_template('index.html')
 
-# معالجة التحميل
+# معالجة التحميل (النسخة المحسنة)
 @app.route('/download', methods=['POST'])
 def download():
-    video_url = request.form['url']
+    video_url = request.form.get('url', '').strip()
     
     if not video_url:
         return jsonify({'error': 'الرجاء إدخال رابط الفيديو'}), 400
@@ -148,13 +164,22 @@ def download():
 # تحميل الملف
 @app.route('/download_file/<filename>')
 def download_file(filename):
-    return send_file(
-        os.path.join(DOWNLOAD_FOLDER, filename),
-        as_attachment=True,
-        download_name=filename
-    )
+    try:
+        return send_file(
+            os.path.join(DOWNLOAD_FOLDER, filename),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({'error': f'الملف غير موجود: {str(e)}'}), 404
 
+# التشغيل الرئيسي (النسخة المحسنة)
 if __name__ == '__main__':
-    # تحديث الكوكيز عند بدء التشغيل
-    update_cookies()
-    app.run(host='0.0.0.0', port=5000)
+    # تحديث الكوكيز عند بدء التشغيل (مع معالجة الأخطاء)
+    try:
+        update_cookies()
+    except Exception as e:
+        print(f"خطأ في تحديث الكوكيات عند البدء: {str(e)}")
+    
+    # تشغيل التطبيق
+    app.run(host='0.0.0.0', port=5000, debug=False)

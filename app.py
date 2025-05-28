@@ -64,11 +64,25 @@ def update_cookies():
             driver.quit()
 
 # تحميل من يوتيوب (النسخة المحسنة)
-def download_youtube_video(url):
+def download_youtube_video(url, quality='best'):
     try:
         ydl_opts = {
             'cookiefile': 'cookies.txt',
-            'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+            'outtmpl': f'{DOWNLOAD_FOLDER}
+        if quality == 'audio':
+            ydl_opts['format'] = 'bestaudio'
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }]
+        elif quality == '360':
+            ydl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]'
+        elif quality == '720':
+            ydl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]'
+        else:
+            ydl_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
+/%(title)s.%(ext)s',
             'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
             'merge_output_format': 'mp4',
             'quiet': True,
@@ -80,7 +94,6 @@ def download_youtube_video(url):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
-            print(\"🎬 تم حفظ الفيديو في:\", filename)
             return filename
     except Exception as e:
         print(f"خطأ في التحميل من يوتيوب: {str(e)}")
@@ -133,13 +146,14 @@ def index():
 @app.route('/download', methods=['POST'])
 def download():
     video_url = request.form.get('url', '').strip()
+    quality = request.form.get('quality', 'best').strip()
     
     if not video_url:
         return jsonify({'error': 'الرجاء إدخال رابط الفيديو'}), 400
     
     try:
         if "youtube.com" in video_url or "youtu.be" in video_url:
-            filename = download_youtube_video(video_url)
+            filename = download_youtube_video(video_url, quality)
             platform = "يوتيوب"
         elif "instagram.com" in video_url:
             filename = download_instagram_video(video_url)

@@ -31,11 +31,10 @@ def setup_selenium():
 # تحديث ملف الكوكيز
 def update_cookies():
     print("جاري تحديث ملف الكوكيات...")
-    driver = setup_selenium()
-    
     try:
+        driver = setup_selenium()
         driver.get("https://www.youtube.com")
-        time.sleep(5)
+        time.sleep(10)  # زيادة وقت الانتظار
         
         cookies = driver.get_cookies()
         with open('cookies.txt', 'w') as f:
@@ -46,9 +45,13 @@ def update_cookies():
         return True
     except Exception as e:
         print(f"خطأ في تحديث الكوكيات: {str(e)}")
+        # إنشاء ملف كوكيز فارغ إذا فشل التحديث
+        with open('cookies.txt', 'w') as f:
+            f.write("")
         return False
     finally:
-        driver.quit()
+        if 'driver' in locals():
+            driver.quit()
 
 # تحميل من يوتيوب
 def download_youtube_video(url):

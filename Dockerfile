@@ -6,24 +6,24 @@ RUN apt-get update && \
     wget \
     unzip \
     curl \
-    gnupg \
+    gnupg2 \
     && rm -rf /var/lib/apt/lists/*
 
-# تثبيت إصدار محدد من Google Chrome يتوافق مع ChromeDriver
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
+# تثبيت Chrome و ChromeDriver متوافقين
+RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
     apt-get update && \
     apt-get install -y google-chrome-stable=114.0.5735.198-1 && \
     rm -rf /var/lib/apt/lists/*
 
-# تثبيت ChromeDriver 114
+# تثبيت ChromeDriver متوافق مع إصدار Chrome
 RUN wget -q "https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip" && \
     unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/bin/ && \
-    chmod +x /usr/bin/chromedriver && \
+    mv chromedriver /usr/local/bin/ && \
+    chmod +x /usr/local/bin/chromedriver && \
     rm chromedriver_linux64.zip
 
-# إنشاء مجلد التطبيق
+# إعداد بيئة العمل
 WORKDIR /app
 
 # نسخ الملفات المطلوبة

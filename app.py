@@ -80,6 +80,7 @@ def download_youtube_video(url):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
+            print(\"🎬 تم حفظ الفيديو في:\", filename)
             return filename
     except Exception as e:
         print(f"خطأ في التحميل من يوتيوب: {str(e)}")

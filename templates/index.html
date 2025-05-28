@@ -3,82 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحميل الفيديوهات</title>
+    <title>تحميل الفيديو</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
+            background: linear-gradient(to left, #f9f9f9, #e6ecf0);
             margin: 0;
             padding: 0;
         }
         .container {
-            max-width: 600px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 50px auto;
             background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
         }
         h1 {
-            text-align: center;
             color: #333;
+            margin-bottom: 30px;
         }
-        label {
-            display: block;
-            margin: 20px 0 10px;
-            color: #555;
+        .platforms {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
         }
-        input[type="text"], select {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        button {
-            width: 100%;
-            background: #007bff;
-            color: white;
+        .platform-btn {
+            background: none;
             border: none;
-            padding: 12px;
-            font-size: 18px;
-            border-radius: 8px;
             cursor: pointer;
+            font-size: 48px;
+            margin: 10px;
+            transition: transform 0.3s;
         }
-        button:hover {
-            background: #0056b3;
+        .platform-btn:hover {
+            transform: scale(1.2);
+        }
+        .youtube { color: #FF0000; }
+        .tiktok { color: #000000; }
+        .instagram { color: #E4405F; }
+        .xplatform { color: #000000; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
         }
         .loading, .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
             display: none;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
         }
-        .success {
-            background: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        .loading { background: #fff3cd; color: #856404; }
+        .result.success { background: #d4edda; color: #155724; }
+        .result.error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>تحميل الفيديو</h1>
+        <h1>تحميل الفيديو من المنصات</h1>
 
-        <label for="videoUrl">رابط الفيديو:</label>
+        <div class="platforms">
+            <button class="platform-btn youtube" onclick="setPlatform('youtube')"><i class="fab fa-youtube"></i></button>
+            <button class="platform-btn tiktok" onclick="setPlatform('tiktok')"><i class="fab fa-tiktok"></i></button>
+            <button class="platform-btn instagram" onclick="setPlatform('instagram')"><i class="fab fa-instagram"></i></button>
+            <button class="platform-btn xplatform" onclick="setPlatform('x')"><i class="fab fa-x-twitter"></i></button>
+        </div>
+
         <input type="text" id="videoUrl" placeholder="أدخل رابط الفيديو هنا...">
 
-        <label for="quality">الجودة:</label>
-        <select id="quality">
-            <option value="best">أفضل جودة (MP4)</option>
-            <option value="audio">صوت فقط (MP3)</option>
-            <option value="360">جودة 360p</option>
-            <option value="720">جودة 720p</option>
-        </select>
+        <div id="qualityContainer">
+            <select id="quality">
+                <option value="best">أفضل جودة (MP4)</option>
+                <option value="audio">صوت فقط (MP3)</option>
+                <option value="360">جودة 360p</option>
+                <option value="720">جودة 720p</option>
+            </select>
+        </div>
 
         <button onclick="downloadVideo()">تحميل</button>
 
@@ -87,6 +94,12 @@
     </div>
 
     <script>
+        let selectedPlatform = '';
+
+        function setPlatform(platform) {
+            selectedPlatform = platform;
+        }
+
         function downloadVideo() {
             const url = document.getElementById('videoUrl').value;
             const quality = document.getElementById('quality').value;
@@ -116,7 +129,7 @@
                 result.style.display = 'block';
                 if (data.success) {
                     result.className = 'result success';
-                    result.innerHTML = `تم التحميل بنجاح!<br><a href="${data.download_url}" download>اضغط هنا لتحميل الملف</a>`;
+                    result.innerHTML = `تم التحميل بنجاح!<br><a href="${data.download_url}" download>تحميل الملف</a>`;
                 } else {
                     result.className = 'result error';
                     result.innerText = data.error || 'حدث خطأ أثناء التحميل';

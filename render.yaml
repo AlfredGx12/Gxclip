@@ -10,3 +10,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.13
+envVars:
+  - key: DISPLAY
+    value: ":99"

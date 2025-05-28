@@ -1,25 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>ClipSavior - Download Videos</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 50px; }
-        form { background: white; padding: 20px; border-radius: 8px; display: inline-block; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input[type="text"] { width: 300px; padding: 10px; margin-bottom: 10px; }
-        button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .message { margin-top: 20px; color: #333; }
-    </style>
+    <title>Clip Savior</title>
 </head>
 <body>
-    <h1>🎬 ClipSavior</h1>
-    <p>Download videos from YouTube, TikTok, Instagram and more!</p>
-    <form method="POST">
-        <input type="text" name="url" placeholder="Paste video URL here" required><br>
-        <button type="submit">Download</button>
+    <h2>📥 تحميل المقاطع من المنصات</h2>
+    <form method="post">
+        <input type="text" name="url" placeholder="ضع رابط الفيديو هنا" required>
+        <button type="submit">تحميل</button>
     </form>
-    {% if message %}
-    <div class="message">{{ message }}</div>
+
+    {% if error %}
+        <p style="color: red;">خطأ: {{ error }}</p>
+    {% endif %}
+
+    {% if download_url %}
+        <p>✅ تم التنزيل! اضغط هنا لتحميله:</p>
+        <a href="{{ download_url }}" download>⬇️ تحميل الفيديو</a>
     {% endif %}
 </body>
 </html>

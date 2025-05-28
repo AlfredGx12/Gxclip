@@ -3,19 +3,10 @@ import yt_dlp
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 import time
 from datetime import datetime
-def setup_selenium():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.binary_location = "/usr/bin/google-chrome"
-    
-    service = Service(executable_path="/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
+
 app = Flask(__name__)
 
 # مسار مجلد التحميلات
@@ -23,38 +14,45 @@ DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
 
-# دالة لتحديث ملف الكوكيات تلقائياً
-def update_cookies():
-    print("جاري تحديث ملف الكوكيات...")
+# إعداد السيلينيوم
+def setup_selenium():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
-    driver = webdriver.Chrome(options=chrome_options)
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.binary_location = "/usr/bin/google-chrome"
+    
+    service = Service(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
+
+# تحديث ملف الكوكيز
+def update_cookies():
+    print("جاري تحديث ملف الكوكيات...")
+    driver = setup_selenium()
     
     try:
-        # 1. الانتقال إلى YouTube وتسجيل الدخول (مثال)
         driver.get("https://www.youtube.com")
-        time.sleep(2)
+        time.sleep(5)
         
-        # 2. هنا يمكنك إضافة خطوات تسجيل الدخول الآلي إذا كان لديك بيانات حساب
-        # driver.find_element(...).click()
-        
-        # 3. الحصول على الكوكيات وتحديث الملف
         cookies = driver.get_cookies()
         with open('cookies.txt', 'w') as f:
             for cookie in cookies:
                 f.write(f"{cookie['name']}={cookie['value']}\n")
         
         print("تم تحديث ملف الكوكيات بنجاح!")
+        return True
     except Exception as e:
         print(f"خطأ في تحديث الكوكيات: {str(e)}")
+        return False
     finally:
         driver.quit()
 
-# دالة لتحميل فيديو يوتيوب مع التعامل مع الكوكيز
+# تحميل من يوتيوب
 def download_youtube_video(url):
     try:
-        # خيارات yt-dlp مع الكوكيات
         ydl_opts = {
             'cookiefile': 'cookies.txt',
             'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
@@ -68,23 +66,11 @@ def download_youtube_video(url):
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
             return filename
-    except yt_dlp.utils.DownloadError as e:
-        print(f"خطأ في التحميل: {str(e)}")
-        # إذا فشلت المحاولة الأولى، نقوم بتحديث الكوكيات والمحاولة مرة أخرى
-        update_cookies()
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                filename = ydl.prepare_filename(info)
-                return filename
-        except Exception as e:
-            print(f"فشلت المحاولة الثانية: {str(e)}")
-            return None
     except Exception as e:
-        print(f"خطأ غير متوقع: {str(e)}")
+        print(f"خطأ في التحميل: {str(e)}")
         return None
 
-# دالة لتحميل من إنستجرام
+# تحميل من إنستجرام
 def download_instagram_video(url):
     try:
         ydl_opts = {
@@ -101,7 +87,7 @@ def download_instagram_video(url):
         print(f"خطأ في تحميل إنستجرام: {str(e)}")
         return None
 
-# دالة لتحميل من تيك توك
+# تحميل من تيك توك
 def download_tiktok_video(url):
     try:
         ydl_opts = {
@@ -118,10 +104,12 @@ def download_tiktok_video(url):
         print(f"خطأ في تحميل تيك توك: {str(e)}")
         return None
 
+# الصفحة الرئيسية
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# معالجة التحميل
 @app.route('/download', methods=['POST'])
 def download():
     video_url = request.form['url']
@@ -154,6 +142,7 @@ def download():
     except Exception as e:
         return jsonify({'error': f'حدث خطأ: {str(e)}'}), 500
 
+# تحميل الملف
 @app.route('/download_file/<filename>')
 def download_file(filename):
     return send_file(
@@ -163,6 +152,6 @@ def download_file(filename):
     )
 
 if __name__ == '__main__':
-    # تحديث الكوكيات عند بدء التشغيل
+    # تحديث الكوكيز عند بدء التشغيل
     update_cookies()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)

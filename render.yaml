@@ -2,7 +2,10 @@ services:
   - type: web
     name: video-downloader
     runtime: python
-    buildCommand: pip install -r requirements.txt && python app.py
+    buildCommand: |
+      apt-get update && \
+      apt-get install -y wget unzip curl gnupg && \
+      pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
